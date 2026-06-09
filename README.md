@@ -4,14 +4,7 @@ A **production-ready** Customer Support Ticketing CRM built with **React + Vite 
 
 ---
 
-## 🚀 Live Demo
 
-| | URL |
-|---|---|
-| **Frontend** | [https://customer-support-ticketing-crm-system.vercel.app](https://customer-support-ticketing-crm-system.vercel.app) |
-| **Backend API** | [https://customer-support-ticketing-crm-system-kpb2.onrender.com](https://customer-support-ticketing-crm-system-kpb2.onrender.com) |
-
----
 
 ## 📦 Tech Stack
 
