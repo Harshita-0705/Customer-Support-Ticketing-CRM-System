@@ -7,23 +7,36 @@ const ticketsRouter = require("./routes/tickets");
 
 const app = express();
 
-// ── CORS ─────────────────────────────────────────────────────────────────────
-// Allow localhost dev + any Vercel frontend domain
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:3000",
-  ...(process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim())
-    : []),
-];
-
+// ── CORS ──────────────────────────────────────────────────────────────────────
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin (mobile apps, curl, Postman)
+      // Allow requests with no origin (Postman, curl, mobile apps)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`CORS blocked: ${origin}`));
+
+      const allowed = [
+        // Local dev
+        "http://localhost:5173",
+        "http://localhost:3000",
+        // All Vercel deployments for this project (main + preview branches)
+        /https:\/\/customer-support-ticketi.*\.vercel\.app$/,
+        /https:\/\/.*harshitas-projects.*\.vercel\.app$/,
+      ];
+
+      // Also allow any origins from CORS_ORIGINS env var (comma separated)
+      const extra = process.env.CORS_ORIGINS
+        ? process.env.CORS_ORIGINS.split(",").map((s) => s.trim())
+        : [];
+
+      const isAllowed =
+        allowed.some((rule) =>
+          rule instanceof RegExp ? rule.test(origin) : rule === origin
+        ) || extra.includes(origin);
+
+      if (isAllowed) return callback(null, true);
+
+      console.warn(`CORS blocked origin: ${origin}`);
+      return callback(null, false); // silently block, don't throw
     },
     credentials: true,
   })
@@ -47,7 +60,7 @@ app.use("/api/*", (_req, res) =>
   res.status(404).json({ error: "API route not found" })
 );
 
-// NOTE: No express.static / no frontend/dist serving.
+// NOTE: No express.static / no frontend serving.
 // Frontend is deployed separately on Vercel.
 
 // ── Error handler (must be last) ──────────────────────────────────────────────
