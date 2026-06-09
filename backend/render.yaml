@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: support-crm-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DB_PATH
+        value: /var/data/crm.db
+      - key: CORS_ORIGINS
+        sync: false   # Set this manually in the Render dashboard
+
+    disk:
+      name: crm-data
+      mountPath: /var/data
+      sizeGB: 1
