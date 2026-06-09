@@ -12,22 +12,20 @@ async function createTicket(req, res, next) {
       return res.status(400).json({ error: `Missing required fields: ${missing.join(", ")}` });
     }
 
-    // Basic email format check
     const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRx.test(customer_email)) {
       return res.status(400).json({ error: "Invalid email address" });
     }
 
     const ticket = ticketService.createTicket({
-      customer_name,
-      customer_email,
-      subject,
-      description,
-      priority,
-      category,
+      customer_name, customer_email, subject, description, priority, category,
     });
 
-    return res.status(201).json(ticket);
+    // Spec: return { ticket_id, created_at }
+    return res.status(201).json({
+      ticket_id:  ticket.ticket_id,
+      created_at: ticket.created_at,
+    });
   } catch (err) {
     next(err);
   }
@@ -38,7 +36,17 @@ async function listTickets(req, res, next) {
   try {
     const { status, search, page, limit } = req.query;
     const result = ticketService.listTickets({ status, search, page, limit });
-    return res.json(result);
+
+    // Spec: return array of { ticket_id, customer_name, subject, status, created_at }
+    const tickets = result.tickets.map((t) => ({
+      ticket_id:     t.ticket_id,
+      customer_name: t.customer_name,
+      subject:       t.subject,
+      status:        t.status,
+      created_at:    t.created_at,
+    }));
+
+    return res.json({ tickets, total: result.total, page: result.page, limit: result.limit });
   } catch (err) {
     next(err);
   }
@@ -60,13 +68,12 @@ async function updateTicket(req, res, next) {
   try {
     const { status, note, priority, category } = req.body;
     const ticket = ticketService.updateTicket(req.params.ticketId, {
-      status,
-      note,
-      priority,
-      category,
+      status, note, priority, category,
     });
     if (!ticket) return res.status(404).json({ error: "Ticket not found" });
-    return res.json(ticket);
+
+    // Spec: return { success: true, updated_at }
+    return res.json({ success: true, updated_at: ticket.updated_at });
   } catch (err) {
     if (err.message && err.message.startsWith("Invalid status")) {
       return res.status(400).json({ error: err.message });
